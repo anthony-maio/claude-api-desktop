@@ -9,6 +9,9 @@ A modern, feature-rich desktop client for the Anthropic Claude API with streamin
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
 
+![Screenmshot](https://raw.githubusercontent.com/anthony-maio/claude-api-desktop/main/cad2.png)
+![Screenmshot](https://raw.githubusercontent.com/anthony-maio/claude-api-desktop/main/cad1.png)
+![Screenmshot](https://raw.githubusercontent.com/anthony-maio/claude-api-desktop/main/cad3.png)
 
 ## Features
 
