@@ -300,6 +300,12 @@ class ClaudeClient:
         # Save message if auto-save is enabled
         if self.auto_save and self.current_conversation_id:
             self.db_manager.save_message(self.current_conversation_id, "user", user_message["content"])
+        elif self.auto_save and self.save_interval == "message":
+            # Create conversation if it doesn't exist for auto-save
+            if not self.current_conversation_id:
+                self.save_conversation(auto_save_mode=True)
+            if self.current_conversation_id:  # Save user message after conversation is created
+                self.db_manager.save_message(self.current_conversation_id, "user", user_message["content"])
         
         # Start API request in separate thread
         self.current_session = threading.Thread(target=self._api_request, args=(self.messages.copy(),))
@@ -403,7 +409,7 @@ class ClaudeClient:
                 if self.auto_save and self.current_conversation_id:
                     self.db_manager.save_message(self.current_conversation_id, "assistant", assistant_message)
                 elif self.auto_save and self.save_interval == "message":
-                    self.save_conversation()
+                    self.save_conversation(auto_save_mode=True)
                     
                 self.message_queue.put(("complete", assistant_message))
                 
@@ -479,7 +485,7 @@ class ClaudeClient:
         if self.messages and messagebox.askyesno("New Conversation", 
                                                 "Start new conversation? Current conversation will be saved."):
             if self.auto_save:
-                self.save_conversation()
+                self.save_conversation(auto_save_mode=True)
             
             self.messages = []
             self.current_conversation_id = None
@@ -489,16 +495,23 @@ class ClaudeClient:
             self.update_stats()
             self.status_label.config(text="Ready", foreground="green")
             
-    def save_conversation(self, title=None):
+    def save_conversation(self, title=None, auto_save_mode=False):
         """Save current conversation to database"""
         if not self.messages:
-            messagebox.showinfo("Save", "No conversation to save")
+            if not auto_save_mode:  # Don't show message for auto-saves
+                messagebox.showinfo("Save", "No conversation to save")
             return
             
+        # Handle title for new conversations
         if not title and not self.current_conversation_id:
-            title = simpledialog.askstring("Save Conversation", "Enter conversation title:")
-            if not title:
-                return
+            if auto_save_mode:
+                # Auto-save: generate timestamp-based title
+                title = f"Conversation {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            else:
+                # Manual save: prompt user
+                title = simpledialog.askstring("Save Conversation", "Enter conversation title:")
+                if not title:
+                    return
                 
         try:
             if self.current_conversation_id:
@@ -531,7 +544,8 @@ class ClaudeClient:
                 for msg in self.messages:
                     self.db_manager.save_message(self.current_conversation_id, msg['role'], msg['content'])
                     
-            messagebox.showinfo("Save", "Conversation saved successfully!")
+            if not auto_save_mode:  # Don't show success message for auto-saves
+                messagebox.showinfo("Save", "Conversation saved successfully!")
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save conversation: {e}")
@@ -697,7 +711,7 @@ class ClaudeClient:
     def auto_save_timer(self):
         """Auto-save timer for timed saves"""
         if self.auto_save and self.save_interval == "timed" and self.messages:
-            self.save_conversation()
+            self.save_conversation(auto_save_mode=True)
         self.root.after(300000, self.auto_save_timer)  # 5 minutes
         
     def branch_from_current(self, branch_name: str = None):
@@ -707,7 +721,7 @@ class ClaudeClient:
             
         # Save current conversation first if needed
         if not self.current_conversation_id:
-            self.save_conversation()
+            self.save_conversation(auto_save_mode=True)
             
         if not branch_name:
             existing_branches = self.db_manager.get_conversation_branches(self.current_conversation_id)
