@@ -8,7 +8,7 @@ version = "1.10.0"
 description = "A modern desktop client for the Anthropic Claude API with streaming support and extended context capabilities"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.8"
-license-files = ["LICENSE"]
+license = {file = "LICENSE"}
 authors = [
     {name = "Anthony Maio", email = "anthony.maio@gmail.com"},
 ]
