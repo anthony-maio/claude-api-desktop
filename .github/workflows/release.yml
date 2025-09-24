@@ -33,7 +33,12 @@ jobs:
         pip install -e ".[test]"
 
     - name: Run tests
-      run: pytest
+      run: |
+        if [ -d "tests" ] && [ "$(ls -A tests/*.py 2>/dev/null)" ]; then
+          pytest
+        else
+          echo "No tests found, skipping test run"
+        fi
 
     - name: Lint with ruff (Python 3.11 only)
       if: matrix.python-version == '3.11'
